@@ -1,13 +1,16 @@
 PlayersList = new Mongo.Collection('players');
 
 if(Meteor.isClient){
+	Meteor.subscribe('thePlayers');
+	
 	Template.leaderboard.helpers({
 		'player': function(){
 			var currentUserId = Meteor.userId();
-			return PlayersList.find({ createdBy: currentUserId }, { sort: { score: -1, name: 1 } })
+			return PlayersList.find({}, { sort: { score: -1, name: 1 } })
 		},
 		'players': function(){
-			return PlayersList.find().count()
+			var currentUserId = Meteor.userId();
+			return PlayersList.find({ createdBy: currentUserId }).count()
 		},
 		'selectedClass': function(){
 			var playerId = this._id;
@@ -21,6 +24,7 @@ if(Meteor.isClient){
 			return PlayersList.findOne(selectedPlayer)
 		}
 	});
+	
 	Template.leaderboard.events({
 		'click .player': function() {
 			var playerId = this._id;
@@ -39,6 +43,7 @@ if(Meteor.isClient){
 			PlayersList.remove(selectedPlayer);
 		}
 	});
+	
 	Template.addPlayerForm.events({
 		'submit form': function(event) {
 			event.preventDefault();
@@ -51,5 +56,12 @@ if(Meteor.isClient){
 			});
 			event.target.playerName.value = '';
 		}
+	});
+}
+
+if(Meteor.isServer){
+	Meteor.publish('thePlayers', function(){
+		var currentUserId = this.userId;
+		return PlayersList.find( { createdBy: currentUserId } )
 	});
 }
